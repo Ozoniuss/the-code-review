@@ -1,24 +1,24 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>The Code Review</title>
-    <link>/the-code-review/</link>
-    <description>The Code Review</description>
+    <title>Blogs on The Code Review</title>
+    <link>/the-code-review/blog/</link>
+    <description>The Code Review (Blogs)</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>qscxzsewqazxcde@gmail.com (ozoniuss)</managingEditor>
     <webMaster>qscxzsewqazxcde@gmail.com (ozoniuss)</webMaster>
     <lastBuildDate>Mon, 08 Apr 2024 00:00:00 +0000</lastBuildDate>
 
-    <atom:link href="/the-code-review/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="/the-code-review/blog/index.xml" rel="self" type="application/rss+xml" />
 
 
     <item>
       <title>Implementing the Outbox Pattern from Scratch by Following DDD</title>
-      <link>/the-code-review/posts/ddd_outbox/</link>
+      <link>/the-code-review/blog/ddd_outbox/</link>
       <pubDate>Mon, 08 Apr 2024 00:00:00 +0000</pubDate>
       <author>qscxzsewqazxcde@gmail.com (ozoniuss)</author>
-      <guid>/the-code-review/posts/ddd_outbox/</guid>
+      <guid>/the-code-review/blog/ddd_outbox/</guid>
       <description>&lt;h2 id=&#34;intro&#34; &gt;
 &lt;div&gt;
     &lt;a href=&#34;#intro&#34;&gt;
@@ -540,7 +540,7 @@
 &lt;/span&gt;&lt;/span&gt;&lt;/span&gt;&lt;span style=&#34;display:flex;&#34;&gt;&lt;span&gt;&lt;span style=&#34;color:#78787e&#34;&gt;&lt;/span&gt;}
 &lt;/span&gt;&lt;/span&gt;&lt;/code&gt;&lt;/pre&gt;&lt;/div&gt;&lt;p&gt;Secondly, it’s important we avoid “duplicate” ACKs. This is quite a subtle one and easy to miss out, but can lead to one of the hardest bugs to fix. Assume you send out an event that doesn’t get ACK-ed in a timely manner. The next polling cycle, you send the same event again, and you receive an ACK. Thus, you increase the index and the next cycle you send new events. Can you trust the next ACK that comes in?&lt;/p&gt;
 &lt;p&gt;The answer is no. Was the currently received ACK a response to the first, or second event? What if the next ACK isn’t meant for the last event? Consider the following timeline diagram:&lt;/p&gt;
-&lt;img src=&#34;./event_order.png&#34; alt=&#34;Event timeline with improper ACK deduplication&#34; title=&#34;Event timeline with improper ACK deduplication&#34; /&gt;
+&lt;p&gt;&lt;img src=&#34;http://localhost:1313/the-code-review/static/event_order.png&#34; alt=&#34;Event timeline with improper ACK deduplication&#34;&gt;&lt;em&gt;Event timeline with improper ACK deduplication&lt;/em&gt;&lt;/p&gt;
 &lt;p&gt;This can lead to an invalid state if the graphing service &lt;em&gt;failed to persist
 event list B properly&lt;/em&gt;, and would not have sent an ACK for those. The producer misinterprets the delayed ACK as if it were meant for event list B.&lt;/p&gt;
 &lt;p&gt;Therefore, we need some sort of mechanism to match an ACK to a message that was send by the producer. This is unfortunately not straightforward&lt;a href=&#34;https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#4c19&#34;&gt;⁸&lt;/a&gt;, so I’ll skip explaining the choices I made in this code, however feel free to check the reference or the code comments where I justify why that is the case. I will just attach the final version of the code (warning: it’s pretty long)&lt;a href=&#34;https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#8139&#34;&gt;¹²&lt;/a&gt;.&lt;/p&gt;

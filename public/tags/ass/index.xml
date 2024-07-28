@@ -1,0 +1,36 @@
+<?xml version="1.0" encoding="utf-8" standalone="yes"?>
+<rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
+  <channel>
+    <title>Ass on The Code Review</title>
+    <link>/the-code-review/tags/ass/</link>
+    <description>The Code Review (Ass)</description>
+    <generator>Hugo -- gohugo.io</generator>
+    <language>en-us</language>
+    <managingEditor>qscxzsewqazxcde@gmail.com (ozoniuss)</managingEditor>
+    <webMaster>qscxzsewqazxcde@gmail.com (ozoniuss)</webMaster>
+    <lastBuildDate>Sun, 28 Jul 2024 20:06:22 +0300</lastBuildDate>
+
+    <atom:link href="/the-code-review/tags/ass/index.xml" rel="self" type="application/rss+xml" />
+
+
+    <item>
+      <title>My First Post</title>
+      <link>/the-code-review/posts/001_what_is_going_on/</link>
+      <pubDate>Sun, 28 Jul 2024 20:06:22 +0300</pubDate>
+      <author>qscxzsewqazxcde@gmail.com (ozoniuss)</author>
+      <guid>/the-code-review/posts/001_what_is_going_on/</guid>
+      <description>&lt;h1 id=&#34;getting-started&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#getting-started&#34;&gt;
+        ##
+    &lt;/a&gt;
+    Getting started
+&lt;/div&gt;
+&lt;/h1&gt;
+&lt;p&gt;whhat is going on&lt;/p&gt;
+&lt;p&gt;lols&lt;/p&gt;
+</description>
+    </item>
+
+  </channel>
+</rss>

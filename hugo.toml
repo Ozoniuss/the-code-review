@@ -10,20 +10,15 @@ location = "Romania"
 
 [menu]
 [[menu.main]]
-name = "Home"
+name = "Blog"
 pageRef = "/"
 weight = 1
-
-[[menu.main]]
-name = "Posts"
-url = "/posts/"
-weight = 2
 
 [[menu.main]]
 identifier = "tags"
 name = "Tags"
 url = "/tags/"
-weight = 3
+weight = 2
 
 [params]
 # readMore = false # true | false; Showing readmore link in the list of posts; default: false

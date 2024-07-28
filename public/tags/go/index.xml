@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>The Code Review</title>
-    <link>/the-code-review/</link>
-    <description>The Code Review</description>
+    <title>Go on The Code Review</title>
+    <link>/the-code-review/tags/go/</link>
+    <description>The Code Review (Go)</description>
     <generator>Hugo -- gohugo.io</generator>
     <language>en-us</language>
     <managingEditor>qscxzsewqazxcde@gmail.com (ozoniuss)</managingEditor>
     <webMaster>qscxzsewqazxcde@gmail.com (ozoniuss)</webMaster>
     <lastBuildDate>Mon, 08 Apr 2024 00:00:00 +0000</lastBuildDate>
 
-    <atom:link href="/the-code-review/index.xml" rel="self" type="application/rss+xml" />
+    <atom:link href="/the-code-review/tags/go/index.xml" rel="self" type="application/rss+xml" />
 
 
     <item>

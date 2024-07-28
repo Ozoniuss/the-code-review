@@ -1,0 +1,1304 @@
+<!DOCTYPE html>
+
+
+<html lang="en-us" data-theme="">
+<head><script src="/the-code-review/livereload.js?mindelay=10&amp;v=2&amp;port=1313&amp;path=the-code-review/livereload" data-no-instant defer></script>
+
+
+<meta charset="utf-8">
+<meta name="HandheldFriendly" content="True">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="referrer" content="no-referrer-when-downgrade">
+
+<title>Implementing the Outbox Pattern from Scratch by Following DDD - The Code Review</title>
+
+<meta name="description" content="maybe this would work?">
+
+
+
+
+
+<link rel="icon" type="image/x-icon" href="http://localhost:1313/the-code-review/favicon.ico">
+<link rel="apple-touch-icon-precomposed" href="http://localhost:1313/the-code-review/favicon.png">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<style>
+  body {
+    visibility: hidden;
+    opacity: 0;
+  }
+</style>
+
+<noscript>
+  <style>
+    body {
+      visibility: visible;
+      opacity: 1;
+    }
+  </style>
+</noscript>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <link rel="stylesheet" href="/the-code-review/css/style.03df79c682b91915c7cd261ecd1a6ec4d0fe668c98fa46310d0fbade319b11bd.css" integrity="sha256-A995xoK5GRXHzSYezRpuxND&#43;ZoyY&#43;kYxDQ&#43;63jGbEb0=">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <link rel="stylesheet" href="/the-code-review/css/style.9c1888ebff42c0224ce04dac10cb2c401f1b77f54f78e8d87d73c3bed781c263.css" integrity="sha256-nBiI6/9CwCJM4E2sEMssQB8bd/VPeOjYfXPDvteBwmM=">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <link rel="stylesheet" href="/the-code-review/css/style.acd606c0fce58853afe0248d37bb41acbbcdd8b1aca2412b6c0fa760da0137f3.css" integrity="sha256-rNYGwPzliFOv4CSNN7tBrLvN2LGsokErbA&#43;nYNoBN/M=">
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <script src="/the-code-review/js/script.672e2309c296e07c18bcd08b28d797a56222ff941d65f308fba3158c44885b14.js" type="text/javascript" charset="utf-8" integrity="sha256-Zy4jCcKW4HwYvNCLKNeXpWIi/5QdZfMI&#43;6MVjESIWxQ="></script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+</head>
+<body>
+    <a class="skip-main" href="#main">Skip to main content</a>
+    <div class="container">
+        <header class="common-header">
+
+                <div class="header-top">
+    <div class="header-top-left">
+        <h1 class="site-title noselect">
+    <a href="/the-code-review">The Code Review</a>
+</h1>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        <div class="theme-switcher">
+            <span class="inline-svg">
+
+
+
+
+
+
+
+
+
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-sun-high"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M14.828 14.828a4 4 0 1 0 -5.656 -5.656a4 4 0 0 0 5.656 5.656z" /><path d="M6.343 17.657l-1.414 1.414" /><path d="M6.343 6.343l-1.414 -1.414" /><path d="M17.657 6.343l1.414 -1.414" /><path d="M17.657 17.657l1.414 1.414" /><path d="M4 12h-2" /><path d="M12 4v-2" /><path d="M20 12h2" /><path d="M12 20v2" /></svg>
+
+
+</span>
+
+        </div>
+
+
+    <script>
+        const STORAGE_KEY = 'user-color-scheme'
+        const defaultTheme = "auto"
+
+        let currentTheme
+        let switchButton
+        let autoDefinedScheme = window.matchMedia('(prefers-color-scheme: dark)')
+
+        function switchTheme(e) {
+            currentTheme = (currentTheme === 'dark') ? 'light' : 'dark';
+            if (localStorage) localStorage.setItem(STORAGE_KEY, currentTheme);
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        const autoChangeScheme = e => {
+            currentTheme = e.matches ? 'dark' : 'light'
+            document.documentElement.setAttribute('data-theme', currentTheme);
+            changeGiscusTheme(currentTheme);
+            document.body.dispatchEvent(new CustomEvent(currentTheme + "-theme-set"));
+        }
+
+        document.addEventListener('DOMContentLoaded', function () {
+            switchButton = document.querySelector('.theme-switcher')
+            currentTheme = detectCurrentScheme()
+
+            if (currentTheme === 'auto') {
+                autoChangeScheme(autoDefinedScheme);
+                autoDefinedScheme.addListener(autoChangeScheme);
+            } else {
+                document.documentElement.setAttribute('data-theme', currentTheme)
+            }
+
+            if (switchButton) {
+                switchButton.addEventListener('click', switchTheme, false)
+            }
+
+            showContent();
+        })
+
+        function detectCurrentScheme() {
+            if (localStorage !== null && localStorage.getItem(STORAGE_KEY)) {
+                return localStorage.getItem(STORAGE_KEY)
+            }
+            if (defaultTheme) {
+                return defaultTheme
+            }
+            return window.matchMedia('(prefers-color-scheme: dark)').matches ? 'dark' : 'light';
+        }
+
+        function showContent() {
+            document.body.style.visibility = 'visible';
+            document.body.style.opacity = 1;
+        }
+
+        function changeGiscusTheme (theme) {
+            function sendMessage(message) {
+              const iframe = document.querySelector('iframe.giscus-frame');
+              if (!iframe) return;
+              iframe.contentWindow.postMessage({ giscus: message }, 'https://giscus.app');
+            }
+
+            sendMessage({
+              setConfig: {
+                theme: theme
+              }
+            });
+        }
+    </script>
+
+
+        <ul class="social-icons noselect">
+
+
+
+
+
+        <li>
+            <a href="https://github.com/Ozoniuss" title="Github" rel="me">
+            <span class="inline-svg">
+
+
+
+
+
+
+
+
+
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-github"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M9 19c-4.3 1.4 -4.3 -2.5 -6 -3m12 5v-3.5c0 -1 .1 -1.4 -.5 -2c2.8 -.3 5.5 -1.4 5.5 -6a4.6 4.6 0 0 0 -1.3 -3.2a4.2 4.2 0 0 0 -.1 -3.2s-1.1 -.3 -3.5 1.3a12.3 12.3 0 0 0 -6.2 0c-2.4 -1.6 -3.5 -1.3 -3.5 -1.3a4.2 4.2 0 0 0 -.1 3.2a4.6 4.6 0 0 0 -1.3 3.2c0 4.6 2.7 5.7 5.5 6c-.6 .6 -.6 1.2 -.5 2v3.5" /></svg>
+
+
+</span>
+
+            </a>
+        </li>
+
+
+
+        <li>
+            <a href="https://www.linkedin.com/in/alex-bledea-a8865b1a0/" title="Linkedin" rel="me">
+            <span class="inline-svg">
+
+
+
+
+
+
+
+
+
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-brand-linkedin"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M4 4m0 2a2 2 0 0 1 2 -2h12a2 2 0 0 1 2 2v12a2 2 0 0 1 -2 2h-12a2 2 0 0 1 -2 -2z" /><path d="M8 11l0 5" /><path d="M8 8l0 .01" /><path d="M12 16l0 -5" /><path d="M16 16v-3a2 2 0 0 0 -4 0" /></svg>
+
+
+</span>
+
+            </a>
+        </li>
+
+
+
+
+
+
+
+    <li>
+            <a href="/the-code-review/index.xml" title="RSS" rel="me">
+            <span class="inline-svg">
+
+
+
+
+
+
+
+
+
+
+    <svg  xmlns="http://www.w3.org/2000/svg"  width="24"  height="24"  viewBox="0 0 24 24"  fill="none"  stroke="currentColor"  stroke-width="2"  stroke-linecap="round"  stroke-linejoin="round"  class="icon icon-tabler icons-tabler-outline icon-tabler-rss"><path stroke="none" d="M0 0h24v24H0z" fill="none"/><path d="M5 19m-1 0a1 1 0 1 0 2 0a1 1 0 1 0 -2 0" /><path d="M4 4a16 16 0 0 1 16 16" /><path d="M4 11a9 9 0 0 1 9 9" /></svg>
+
+
+</span>
+
+            </a>
+        </li>
+
+
+</ul>
+
+    </div>
+    <div class="header-top-right">
+
+    </div>
+</div>
+
+
+    <nav class="noselect">
+
+
+        <a class="" href="http://localhost:1313/the-code-review/" title="">Home</a>
+
+        <a class="" href="http://localhost:1313/the-code-review/tags/" title="">Tags</a>
+
+    </nav>
+
+
+
+
+
+
+
+
+
+        </header>
+        <main id="main" tabindex="-1">
+
+
+
+    <article class="post h-entry">
+        <div class="post-header">
+            <header>
+                <h1 class="p-name post-title">Implementing the Outbox Pattern from Scratch by Following DDD</h1>
+
+
+            </header>
+
+
+
+
+<div class="post-info noselect">
+
+        <div class="post-date dt-published">
+            <time datetime="2024-06-28">2024-06-28</time>
+
+        </div>
+
+
+    <a class="post-hidden-url u-url" href="/the-code-review/posts/002_outbox_ddd/">/the-code-review/posts/002_outbox_ddd/</a>
+    <a href="http://localhost:1313/the-code-review/" class="p-name p-author post-hidden-author h-card" rel="me"></a>
+
+
+    <div class="post-taxonomies">
+
+
+            <ul class="post-tags">
+
+
+                    <li><a href="/the-code-review/tags/ddd/">#DDD</a></li>
+
+
+                    <li><a href="/the-code-review/tags/go/">#Go</a></li>
+
+            </ul>
+
+
+    </div>
+</div>
+
+        </div>
+
+
+
+
+
+
+
+
+
+
+
+  <details class="toc noselect">
+    <summary>Table of Contents</summary>
+    <div class="inner"><nav id="TableOfContents">
+  <ul>
+    <li><a href="#notes">Notes</a></li>
+    <li><a href="#references">References</a></li>
+    <li><a href="#stackademic-">Stackademic 🎓</a></li>
+  </ul>
+</nav></div>
+  </details>
+
+
+
+
+<script>
+  var toc = document.querySelector(".toc");
+  if (toc) {
+    toc.addEventListener("click", function () {
+      if (event.target.tagName !== "A") {
+        event.preventDefault();
+        if (this.open) {
+          this.open = false;
+          this.classList.remove("expanded");
+        } else {
+          this.open = true;
+          this.classList.add("expanded");
+        }
+      }
+    });
+  }
+</script>
+
+        <div class="content e-content">
+            <p>This year, one of my resolutions was that I would read more. My perhaps rather ambitious goal was to read every day, even if just for a bit, and to finish 10 books this year. And honestly, so far it’s not really looking great. But at least <a href="https://www.amazon.com/Learning-Domain-Driven-Design-Aligning-Architecture/dp/1098100131">Domain-Driven Design by Vlad Khononov</a> has got me hooked, and I just managed to finish it.</p>
+<p>Another one of my resolutions was that I would publish more articles, so let’s not talk about it and please don’t look at my profile.</p>
+<p>Anyway, back to DDD. At one of the chapters, the author introduces a pattern for reliable message publishing, called the** outbox pattern**. The description pretty much sums it up. If you’re working with a system where a business operation both updates state and publishes some events, this pattern helps keeping consistency between current state and consumed events.</p>
+<p>This may sound a bit abstract at first, and perhaps it’s not straightforward to make something concrete out of it. In fact, the need for this pattern might not be obvious yet. The book has a full chapter dedicated for this pattern, which I warmly recommend if you want to understand it more in depth. If you don’t own the book, <a href="https://www.baeldung.com/cs/outbox-pattern-microservices">this article</a> is a nice free resource.</p>
+<p>In short, rather than just sending events and updating the database state separately, events are also stored in the database, atomically with the updated state. Some mechanism takes the events out of the database, publishing them to a relay or queue, where they reach consumers.</p>
+<p>Basically, the difference from a straightforward approach of publishing the events to the queue directly the moment they were generated is the local persistence. This helps against issues such as publishing the events successfully, but failing to persist the new state.</p>
+<p>However, I find it nice when learning a new pattern to build something “practical” with it. I believe it does a great job at <em>internalizing</em> the concepts you’re learning, because:</p>
+<ul>
+<li>
+<p>It enables you to understand the shortcomings of simpler approaches, and the benefits of adopting the pattern;</p>
+</li>
+<li>
+<p>It forces you to fully understand the pattern, discover edge cases and make tradeoffs, or you risk a flawed or onerous solution;</p>
+</li>
+<li>
+<p>It offers you a good idea of the implementation complexity.</p>
+</li>
+</ul>
+<p>Besides, you will see in this article that modelling real-world use cases, even in a simplified scenario, to make room for this pattern comes with quite some challenges on its own. By doing this, you end up learning much more than what you initially desired, and it’s an excellent refresher of your coding knowledge.</p>
+<p>Enough, let’s dive into the concrete stuff. I’ll walk over my entire process, from modelling a simplified environment that could use the outbox pattern, to writing a full implementation from the ground up. I’m going to share all the challenges I encountered, as well the trade-offs I decided to make for the sake of simplicity and readability. I will also be pointing out a lot of practices I followed from a DDD perspective.</p>
+<p>The code was pretty much written concurrently with this article, trying to portray my journey as accurately as possible. I’m hoping this would help give some insights into things like feature prioritization, analyzing alternatives and being pragmatic in terms of time spent and code complexity.</p>
+<p>If you’re interested in some of my deeper thoughts or observations, subscripts<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#9bda">⁰</a> point to paragrahps at the end of the article. External references are either specified through links or like this [<a href="https://example.com/">EXA</a>]. Just click on them and they will take you to the right place.</p>
+<blockquote>
+<p>NOTE: Linking a medium paragraph is more complicated than it needs to be. I hope your links will work. If they don’t, sorry :/</p>
+</blockquote>
+<p>The very first step of this journey is defining our environment, the boundary where all the code we’re going to write lives. Let’s assume the following scenario: we’re building a Medium competitor where people can post articles. A fancy new feature this competitor provides is a public “like graph” for any author. Essentially, when we go to an author’s profile, we can see a graph displaying their rate of likes accross all stories, in time. Pretty cool and competitive, huh? (and definitely not useless!)</p>
+<blockquote>
+<p>Domain-Driven Design calls this a <strong>core subdomain</strong>*: *something that a company is doing different to get an edge over the competition.</p>
+</blockquote>
+<p>Alright, so let’s think about the data that needs to be collected. Just to draw the graph mentioned previously, for a single like we have to store:</p>
+<ul>
+<li>
+<p>The timestamp of when the like happened, which will give us datapoints to create a time series;</p>
+</li>
+<li>
+<p>The author that received the like, so we only use their likes when creating the graph.</p>
+</li>
+</ul>
+<p>Additional information such as the article that received a like, or the person who had liked the article could also be interesting for new features not yet discovered. Maybe in the future we’ll want to show each story’s “highlight” (the day it received most likes). Consequently, our solution should be relatively <em>easy to change</em> for potential unknown new features.</p>
+<p>From a design perspective, we can model this as a service managing articles (article service), that emits events to another service whenever an article receives a like. This other service is responsible for drawing and storing the graphs (graping service). We should assume that it’s crucial to have consistency between the article like count stored in the main service and the events from the graphing service, so there should not be any dropped or duplicate events. <strong>Eventual consistency</strong>* *is what we’re looking for here.</p>
+<p>This is a bit forced, but hey, that’s all I could come up with.</p>
+<blockquote>
+<p>I’m ok with this light coupling between the like count and liked events in different services. It aids with the load if you want to display a list of authors and show their total number of likes in that list.</p>
+</blockquote>
+<p>I will be writing the articles service in Go, the graphing service in Python (mainly because of Matplotlib) and I will follow Domain-Driven Design while doing so. However, none of these is a hard requirement to implement an outbox.</p>
+<p>Now we have enough information to start implementing our simple example. There is no need to go above and beyond here, we just need a proof of concept (<strong>PoC</strong>). Let’s begin by putting up a model for our fictional service, starting with the article itself:</p>
+<div class="highlight"><pre tabindex="0" style="color:#e2e4e5;background-color:#282a36;-moz-tab-size:4;-o-tab-size:4;tab-size:4;"><code class="language-go" data-lang="go"><span style="display:flex;"><span><span style="color:#78787e">// Article is an aggregate encapsulating an article&#39;s state. It exposes
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e">// methods to mutate the article which ensure an article&#39;s consistency.
+</span></span></span><span style="display:flex;"><span><span style="color:#78787e"></span><span style="color:#ff5c57">type</span> Article <span style="color:#ff5c57">struct</span> {
+</span></span><span style="display:flex;"><span>    Id          <span style="color:#9aedfe">int</span>
+</span></span><span style="display:flex;"><span>    AuthorId    <span style="color:#9aedfe">int</span>
+</span></span><span style="display:flex;"><span>    Content     <span style="color:#9aedfe">string</span>
+</span></span><span style="display:flex;"><span>    Likes       <span style="color:#9aedfe">int</span>
+</span></span><span style="display:flex;"><span>    PublishedAt time.Time
+</span></span><span style="display:flex;"><span>    ModifiedAt  time.Time
+</span></span><span style="display:flex;"><span>}
+</span></span></code></pre></div><p>Note that an <strong>aggregate</strong> is a domain-driven design concept. The main purpose of an aggregate is that we’re always internally protecting this object’s consistency through the public methods we expose to mutate it. Let’s also create some of these methods:</p>
+<pre><code>// Like should be called when an author's article receives a like.
+func (a *Article) Like() {
+  a.Likes++
+}
+
+// UpdateContent should be called when an author updates his article.
+func (a *Article) UpdateContent(newContent string) {
+  a.Content = newContent
+  a.ModifiedAt = time.Now()
+}
+</code></pre>
+<p>The aggregate is pretty much applying the *abstraction *and <em>encapsulation</em> principles behind OOP. I like to point this out because I find that there are way to many terms in our industry that just refer to nuances of the same underlying concept. The design pattern that makes use of aggregates is called <strong>domain model</strong>.</p>
+<p>There are some useful considerations when designing aggregates. First, here its properties are public only for simplicity (In Go, uppercase fields are public). If we truly wanted to <em>enforce</em> the aggregate pattern, we’d make the properties readonly. That’s not because mutable fields are inherently prohibited, but every change to the aggregate must keep it in a valid state. In our case, it doesn’t really make sense to allow randomly changing the like count, or updating the content without the modified timestamp.</p>
+<p>Second, we should be careful when creating aggregates for the first time. It’s not that hard to end up with an invalid author or timestamps. Typically, after this object had been created, you would use it in the following way:</p>
+<ul>
+<li>
+<p>Load the aggregate’s current state from storage;</p>
+</li>
+<li>
+<p>Update its state during a business operation, via its public methods or fields, which protects internal constraints;</p>
+</li>
+<li>
+<p>Save the new state, whilst doing everything atomically in a transaction.</p>
+</li>
+</ul>
+<p>This helps making it easy to always keep a valid state, while writing very expressive code. Though, it’s always a good exercise to think and compare different ways<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#302b">⁹</a> to achieve this: validators, database constraints, etc.</p>
+<p>The other model we have to define is the “like” data. This is going to be the payload of an event emited by the articles service when calling the Like() method. It could look something like this:</p>
+<pre><code>// ArticleLikedEvent models the payload of an event emitted when an
+// author's article receives a like.
+type ArticleLikedEvent struct {
+  EventId   int
+  ArticleId int
+  Timestamp time.Time
+}
+</code></pre>
+<blockquote>
+<p>If using Go, it’s probably best to always export these fields. That is because we will have to serialize these events at some point. Generally, only exported fields are serialized in Go by default, without any additional workarounds.</p>
+</blockquote>
+<p>This is simple enough for now. We can always come back to add more fields if we need them.</p>
+<p>As long as the code is easy to change, I like the approach of starting with a simple but robust enough implementation, following good practices and adjusting it based on needs discovered along the way. It gives an ideal balance between complexity, readability and implementation speed. Adding new fields is almost always a forwards and backwards compatible change. [<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#dafc">MK</a>]</p>
+<p>We are not done yet. If following DDD, domain events are part of an aggregate’s public interface, and are emitted by the aggregate itself<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#cee7">¹</a>. So let’s make that explicit in our code:</p>
+<pre><code>type Article struct {
+  // ...
+  likedEvents []ArticleLikedEvent
+}
+
+// GetLikedEvents returns all liked events that were generated when performing
+// some business logic through the article aggregate.
+func (a *Article) GetLikedEvents() []ArticleLikedEvent {
+  return a.likedEvents
+}
+</code></pre>
+<p>And finally, adjust the Like() method accordingly:</p>
+<pre><code>func (a *Article) Like() {
+  a.Likes++
+
+  a.likedEvents = append(a.likedEvents, ArticleLikedEvent{
+    ArticleId: a.Id,
+    Timestamp: time.Now(),
+  })
+}
+</code></pre>
+<blockquote>
+<p>The decision to return an ArticleLikedEvent array was pretty much arbitrary and perhaps not the best one. It’s too late to change it now, so I thought I’d mention that it’s worth experimenting with approaches that help reducing code duplication. Having an event interface and returning a list of generic events instead ( GetNewEvents for instance) would have probably been a better idea.</p>
+</blockquote>
+<p>We are in a good state with the aggregate. Before we’re able to use it in practice and send liked events reliably, we need some storage. So, it’s time to define some storing capabilities. Let’s roll in a ports &amp; adapters [<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#7c62">VK</a>] fashion to specify the requirements of our data source:</p>
+<pre><code>// ArticleStorage is a port which specifies the required interactions between
+// the application and a data source containing all articles.
+type ArticleStorage interface {
+  // Insert inserts a new article, or returns an error if the article already
+  // exists.
+  Insert(a Article) (Article, error)
+  // Get retrieves an article, or returns an error if the article does not
+  // exist.
+  Get(a Article) (Article, error)
+  // Update updates an article that matches the input article's id, or returns
+  // an error if there is no such article.
+  Update(a Article) (Article, error)
+}
+</code></pre>
+<p>Together with our lazy implementation:</p>
+<pre><code>// InMemoryArticles is our in-memory database, and also an adapter for our
+// articles storage.
+type InMemoryArticles struct {
+  // a wannabe postgres database
+  articles []Article
+}
+
+// Implementation of ArticleStorage methods
+// ...
+</code></pre>
+<blockquote>
+<p>Oversimplified, the main idea behind ports &amp; adapters is defining <strong>specifications</strong> in your business logic with the requirements of external components, and providing <strong>implementations</strong> for these interfaces in separate “infrastructure” modules. The specifications, often achieved via interfaces, are called ports, and the implementations adapters. Then, you can easily change “adapters” for a given “port”.</p>
+</blockquote>
+<p>So far, so good. I won’t be showing yet the implementation of each method because it doesn’t really matter at this stage. We only need to understand the capabilities, defined by our specification.</p>
+<p>Now, in order to achieve the outbox design pattern, we also need a way to persist domain events at the storage layer, alongside our aggregate’s state. Let’s extend the database with that capability:</p>
+<pre><code>// Since the outbox is now part of the storage, we need to expose some
+// methods to interact with it in the port.
+type ArticleStorage interface {
+ // ...
+
+ // InsertArticleLikedEvent stores an article liked event in the outbox
+ // table.
+ InsertArticleLikedEvent(e ArticleLikedEvent) (ArticleLikedEvent, error)
+}
+
+type InMemoryArticles struct {
+ // ...
+ outbox []ArticleLikedEvent
+}
+</code></pre>
+<p>The storage could also be a Postgres database, a Mongo database or even a simple file. We can implement an outbox on all of those storage types, and we can even make it really easy so change between storage types through a start-up config. So, I just picked a straightforward one. Or at least, what I thought should have been a straightforward one. It gets complicated really quick<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#3282">²</a>.</p>
+<p>It’s time to emit domain events.</p>
+<p>The part of our PoC that will emit the ArticleLikedEvent events is the aggregate’s Like() method. However, that’s not going to be the place where the code for calling the database storage lives. That would require the aggregate to be aware of how to use the storage, which is beyond its purpose. In fact, it likely leads to <a href="https://www.oreilly.com/library/view/software-architecture-patterns/9781491971437/ch01.html">layered architecture</a>, which is an alternative to ports &amp; adapters that we’re avoiding here.</p>
+<p>This is why in DDD, domain events are part of an aggregate. We could think of the business logic for the entire process of liking an article as something like the code below:</p>
+<pre><code>func LikeArticle(articleId int) error {
+  // Load the aggregate state and apply business logic.
+  article, err := storage.Get(articleId)
+  if err != nil {
+    return fmt.Errorf(&quot;could not retrieve article&quot;)
+  }
+
+  // Update aggregate's state and get the events that were
+  // generated as a result.
+  article.Like()
+  events := article.getLikedEvents()
+
+  // Store the new state and domain events in the same database.
+  _, err := storage.Update(article)
+  if err != nil {
+    return fmt.Errorf(&quot;could not update article: %s&quot;, err.Error())
+  }
+  for _, e := range events {
+    err := storage.InsertArticleLikedEvent(e)
+    if err != nil {
+      return fmt.Errorf(&quot;could not insert liked event: %s&quot;, err.Error())
+    }
+  }
+  return nil
+}
+</code></pre>
+<p>This method may be called for example from an HTTP handler, or be part of a service. Its name matches a possible business operation.</p>
+<blockquote>
+<p>An important note to make here is that loading an article’s state (e.g. by calling storage.Get()) should instantiate an article <strong>without any existing events</strong>! Refer to [<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#cee7">1</a>] for more details.</p>
+</blockquote>
+<p>We are progressing well, we already have some business logic set up. But, this code omitted a very important aspect of the outbox pattern: that the new aggregate’s state and the new domain events should be stored in the database <strong>atomically</strong>. What if the code would crash after updating the article, but before storing the events in the outbox?</p>
+<pre><code>_, err := storage.Update(article)
+if err != nil {
+  return fmt.Errorf(&quot;could not update article: %s&quot;, err.Error())
+}
+// :(
+for _, e := range events {
+  err := storage.InsertArticleLikedEvent(e)
+  if err != nil {
+    return fmt.Errorf(&quot;could not insert liked event: %s&quot;, err.Error())
+  }
+}
+</code></pre>
+<p>Note that I’m talking about crashes within the code executing the business logic, which is likely happening in a separate execution context like a different thread<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#5937">¹¹</a>. Obviously, with an in-memory database, we lose all data if the entire process goes down. That is still no reason to overlook transactional boundaries, a valid concern when working with a real database, or when multiple systems are interacting in general.</p>
+<p>The least we could do is guard against data corruption from multiple threads accessing the in-memory database at the same time<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#1eed">¹⁰</a>. Consider the following scenario:</p>
+<ul>
+<li><em>What if the InsertArticleLikedEvent database function would check that the event’s article Id must be in the articles array? If a different thread would finish delete the article just before the for loop, we would end up in an inconsistent outbox state, because the article’s state has changed and the number of likes increased, but inserting the liked event will error.</em></li>
+</ul>
+<p>Thus, let’s add a very basic locking mechanism to our database. To avoid complex multithreaded logic<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#de49">³</a>, let’s just assume that every operation exposed by the storage is performed atomically. The advantage of this approach is that it can be done easily by adding a mutex:</p>
+<pre><code>type InMemoryArticles struct {
+  // we want to seem sophisticated
+  mu sync.Mutex
+}
+</code></pre>
+<p>Now all operations will have to use the mutex:</p>
+<pre><code>func (repo *InMemoryArticles) Insert(article Article) (Article, error) {
+ repo.mu.Lock()
+ defer repo.mu.Unlock()
+
+ repo.articles = append(repo.articles, article)
+ return article, nil
+}
+</code></pre>
+<p>The disadvantage with a single mutex is that we can’t do multiple operations as part of the same transaction, since each operation would require locking the database first, resulting in deadlocks. So we have to define a new method on the storage to implement our like feature:</p>
+<pre><code>type ArticleStorage interface {
+  // ...
+  // UpdateArticleAndInsertLikedEvents commits the changes to an article's
+  // state atomically with the events it emitted.
+  UpdateArticleAndInsertLikedEvents(a Article, events []ArticleLikedEvent) error
+}
+
+
+func LikeArticle(articleId int) error {
+  // load the aggregate state and apply business logic
+  article, err := storage.Get(articleId)
+  if err != nil {
+    return fmt.Errorf(&quot;could not retrieve article&quot;)
+ }
+
+  article.Like()
+  events := article.getLikedEvents()
+
+  // commit the aggregate's state and domain events atomically to the
+  // database
+  err = storage.UpdateArticleAndInsertLikedEvents(article, events)
+  if err != nil {
+    return fmt.Errorf(&quot;could not update article state after like: %s&quot;,
+    err.Error())
+  }
+  return nil
+}
+</code></pre>
+<p>Requiring a new method for every combination of operations is definitely not ideal, leading to quite some boilerplate and potentially repeated code. There is also duplication in having to lock and unlock during every operation. However, it makes room for optimizations like performing multiple operations via a single query, and the good protection against panics (<a href="https://go.dev/blog/defer-panic-and-recover">a Go concept</a>, think of it as thread failure) and concurrent database access is sufficient to make this trade-off and move forward.</p>
+<p>Told you, it got complicated really quick. :)</p>
+<p>Wrapping up with the full implementation, including the public HTTP interface:</p>
+<pre><code>func main() {
+  // Initialize the storage. Based on config, this could instantiate
+  // different types of storage, e.g. real postgres
+  storage := NewInMemoryArticles()
+  requestHandler := NewHandler(storage)
+
+  // GO 1.22 :)
+  http.HandleFunc(&quot;POST /articles/{id}/like&quot;, requestHandler.HandleLikeArticle)
+  // other handlers
+}
+
+// handler holds the data that is shared accross requests and defines
+// HTTP handlers for requests.
+type handler struct {
+  storage ArticleStorage
+}
+func NewHandler(storage ArticleStorage) handler {
+  return handler{storage: storage}
+}
+
+func (h *handler) HandleLikeArticle(w http.ResponseWriter, r *http.Request) {
+  // HTTP handler logic
+  articleIdStr := r.PathValue(&quot;id&quot;)
+  articleId, err := strconv.Atoi(articleIdStr)
+  if err != nil {
+    w.WriteHeader(http.StatusBadRequest)
+    return
+ }
+
+ // start of bussiness logic
+ err = LikeArticle(articleId)
+
+ // continue HTTP handler logic
+ if err != nil {
+    fmt.Printf(&quot;got error: %s\n&quot;, err.Error())
+    w.WriteHeader(http.StatusInternalServerError)
+    fmt.Fprint(w, &quot;:(&quot;)
+    return
+  }
+}
+
+// other handlers implementation
+</code></pre>
+<p>This is how the entrypoint of the application would typically look like.</p>
+<p>Of course, I’ve not talked nor implemented things like logging, proper error handling, middleware, service config, metrics and things like that to keep the implementation simple and easy to follow. This article is long enough as is. Now, it’s time to move on to actually publishing some events.</p>
+<p>Alright, we are in a good state to start the implementation for reliably sending events to the consumer. We are going to use a pull-based approach. That is, we are going to have a separate goroutine polling the database repeatedly (say, every 5 seconds, for PoC) and send these events to a different process. At a high level, the code will look something like this:</p>
+<pre><code>// poll queries the inmemory database at the specified interval, sending
+// away the new events to the consumer.
+func poll(interval time.Duration) {
+  ticker := time.NewTicker(interval)
+  go func() {
+    for {
+      // wait for the timer to fire every cycle
+      &lt;-ticker.C
+      sendUnconsumedEvents()
+    }
+  }()
+}
+</code></pre>
+<p>Obviously, this is highly simplified. It abstracts away details such as:</p>
+<ul>
+<li>
+<p>the connection between the poller and the database;</p>
+</li>
+<li>
+<p>the mechanism for figuring out the unconsumed events;</p>
+</li>
+<li>
+<p>the logic required to communicate with the consumers.</p>
+</li>
+</ul>
+<p>Let’s take these one by one and build our poller abstraction from ground up. Starting with the first point, our poller needs access to the database. This would look something like this:</p>
+<pre><code>// LikedArticlesPoller provides a mechanism for sending liked article events
+// to a downstream consumer.
+type LikedArticlesPoller struct {
+  storage ArticleStorage
+}
+
+func NewLikedArticlesPoller(storage ArticleStorage) *LikedArticlesPoller {
+  return &amp;LikedArticlesPoller{storage: storage}
+}
+
+func (p *LikedArticlesPoller) poll() {
+  // polling logic implementation
+}
+</code></pre>
+<p>Our poller is now aware of the database, which is passed down via dependency injection. As we saw previously, it takes in an ArticleStorage structure, rather than an InmemoryArticleStorage . This is essential to make it easy to change storage implementations (or switch “adapters”).</p>
+<p>Next in line is figuring out a mechanism to determine which events have to be sent every polling cycle. This depends on our outbox implementation, so let’s list approaches. We could either:</p>
+<ul>
+<li>
+<p>delete the events that have already been consumed, or</p>
+</li>
+<li>
+<p>keep all events, and an index tracking the first event that had not been consumed.</p>
+</li>
+</ul>
+<p>I will just go ahead and pick the second one because it’s simpler to implement. It may not seem like it, but the former comes with significant disadvantages, even just for implementing this simple PoC<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#a45f">⁴</a>.</p>
+<p>Let’s add this capability to our poller. The poller itself needs an index to know which events have not yet been sent to the downstream:</p>
+<pre><code>type LikedArticlesPoller struct {
+  // ...
+  lastEventIndex int
+}
+</code></pre>
+<p>And the storage medium needs to offer the possibility to retrieve all events starting from a different index. Let’s extend our storage interface:</p>
+<pre><code>type ArticleStorage interface {
+ // ...
+ // GetArticleLikedEventsFromIndex returns all events starting from a
+ // specific index.
+ GetArticleLikedEventsFromIndex(i int) ([]ArticleLikedEvent, error)
+}
+</code></pre>
+<p>By adding this change, the storage abstraction might seem leaky. It looks like it exposes the fact that liked events are stored in order, in an array-like container. However, I don’t necessarily see it that way, because it’s reasonable to expect an order relationship over these events. To me, the index only reveals that these events have been ordered (and maybe that adding a new event doesn’t change their ordering), acting similar to an id<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#e4f4">⁵</a>. We are aware of these characteristics when implementing the outbox.</p>
+<p>With all these changes, let’s complete our poll() code:</p>
+<pre><code>func (p *LikedArticlesPoller) poll(interval time.Duration) {
+ ticker := time.NewTicker(interval)
+ go func() {
+  for {
+   &lt;-ticker.C
+   newEvents, err := p.storage.GetArticleLikedEventsFromIndex(p.lastEventIndex)
+
+   // I promise this is not how I handle errors in production code.
+   if err != nil {
+    fmt.Printf(&quot;error retrieving latest events, aborting: %s\n&quot;, err.Error())
+    break
+   }
+
+   err = p.sendNewEvents(newEvents)
+   if err != nil {
+    fmt.Printf(&quot;did not manage to send new events: %s\n&quot;, err.Error())
+   }
+  }
+ }()
+}
+</code></pre>
+<p>While we’re at it, let’s also shift the location of the poll interval inside the LikedArticlesPoller itself:</p>
+<pre><code>type LikedArticlesPoller struct {
+   // ...
+   pollInterval time.Duration
+}
+
+func (p *LikedArticlesPoller) poll() {
+  ticker := time.NewTicker(p.pollInterval)
+  // ...
+}
+</code></pre>
+<p>We’re doing good progress; our outbox is starting to shape up. By this point, you may have noticed that the poller introduced a race condition within our code: liking an article can happen “simultaneously” (conceptually, at least) with polling the liked events. Thankfully, the solution we designed for storing events atomically with the new article’s state helps us out in this case as well. We just have to remember to add the mutex logic inside the method retrieving the events:</p>
+<pre><code>func (repo *InMemoryArticles) GetArticleLikedEventsFromIndex(index int)
+    ([]ArticleLikedEvent, error) {
+ repo.mu.Lock()
+ defer repo.mu.Unlock()
+
+ return slices.Clone(repo.outbox[index:]), nil
+}
+</code></pre>
+<p>The last functionality is connecting and communicating with consumers. I don’t want to spend a lot of time here, so I’ll just point out a basic approach: send events through a TCP connection, and wait for an ACK from the consumer.</p>
+<p>We can split this step in two parts, that is, creating the TCP connection and sending the data. Setting up the connection belongs to the poller creation logic, so let’s pass in the TCP socket information:</p>
+<pre><code>type LikedArticlesPoller struct {
+  // ...
+  conn net.Conn
+}
+
+func NewLikedArticlesPoller(storage ArticleStorage, pollInterval time.Duration,
+  authority string) (*LikedArticlesPoller, error) {
+
+  // authority is the fancy RFC 3986 name for host + port
+  conn, err := net.Dial(&quot;tcp&quot;, authority)
+  if err != nil {
+    return nil, fmt.Errorf(&quot;could not connect to downstream: %s&quot;, err.Error())
+  }
+
+ return &amp;LikedArticlesPoller{
+   storage:        storage,
+   lastEventIndex: -1,
+   pollInterval:   pollInterval,
+   conn:           conn,
+  }, nil
+}
+</code></pre>
+<p>Now the poller holds enough information to write the sendNewEvents method. The logic is simple: send the events, and wait for an ACK. If we succeed, increment the index with the number of events we sent. If either fails, do nothing.</p>
+<pre><code>func (p *LikedArticlesPoller) sendNewEvents(events []ArticleLikedEvent) error {
+
+  // encode the events as json before sending them
+  enc := json.NewEncoder(p.conn)
+  err := enc.Encode(events)
+  if err != nil {
+    return fmt.Errorf(&quot;could not send events: %s&quot;, err.Error())
+  }
+
+  var ack bool
+  dec := json.NewDecoder(p.conn)
+  err = dec.Decode(&amp;ack)
+  if err != nil {
+    return fmt.Errorf(&quot;failed reading ack from consumer: %s&quot;, err.Error())
+  }
+
+  // This is not particularly necessary, just an extra sanity check.
+  if ack {
+    p.lastEventIndex += len(events)
+  }
+  return nil
+}
+</code></pre>
+<p>Notice that, in order to send the events over the wire, we had to encode them in some way. The decision to choose JSON was pretty much done for simplicity, but it’s not the most efficient one and there are arguments for other approaches<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#128a">⁶</a>. Remember that I said before the event fields have to be exported? With JSON, I also like to make it explicit how the serialization result will look like, which requires a small change:</p>
+<pre><code>// Specify which fields to match from the json encoding.
+type ArticleLikedEvent struct {
+  EventId   int       `json:&quot;event_id&quot;`
+  ArticleId int       `json:&quot;article_id&quot;`
+  Timestamp time.Time `json:&quot;timestamp&quot;`
+}
+
+// encoded article liked event example
+{&quot;event_id&quot;:1,&quot;article_id&quot;:2,&quot;timestamp&quot;:&quot;2024-03-30T16:27:43.846537102+02:00&quot;}
+</code></pre>
+<p>Awesome. This will enable the Python consumer to understand how to read the incoming events.</p>
+<p>The primary logic is almost fully sketched out now, but still not complete. First, we have configured a polling interval, but what happens if we don’t receive an ACK from the consumer until that interval expires? This will delay the next polling cycle, which is undesirable.</p>
+<p>Besides, you need some sort of heuristics anyway in distributed systems to determine whether or not a participating process has crashed or not. In our example, adding a timeout will be good enough. This should be smaller than the poll interval, so for simplicity let’s just say it’s one second less:</p>
+<pre><code>type LikedArticlesPoller struct {
+  // ...
+  timeout time.Duration
+}
+
+func NewLikedArticlesPoller(storage ArticleStorage, pollInterval time.Duration,
+  authority string) (*LikedArticlesPoller, error) {
+  // ...
+  timeout := pollInterval - 1*time.Second
+
+  return &amp;LikedArticlesPoller{
+    // ...
+    timeout: timeout,
+  }, nil
+}
+
+func (p *LikedArticlesPoller) sendNewEvents(events []ArticleLikedEvent) error {
+  // ...
+
+  // If the ack is not received after the timeout, we consider that the
+  // consumer failed. This is the Go way of doing so with TCP sockets.
+  p.conn.SetReadDeadline(time.Now().Add(p.timeout))
+
+  dec := json.NewDecoder(p.conn)
+  var ack bool
+  err = dec.Decode(&amp;ack)
+  // ...
+}
+</code></pre>
+<p>Secondly, it’s important we avoid “duplicate” ACKs. This is quite a subtle one and easy to miss out, but can lead to one of the hardest bugs to fix. Assume you send out an event that doesn’t get ACK-ed in a timely manner. The next polling cycle, you send the same event again, and you receive an ACK. Thus, you increase the index and the next cycle you send new events. Can you trust the next ACK that comes in?</p>
+<p>The answer is no. Was the currently received ACK a response to the first, or second event? What if the next ACK isn’t meant for the last event? Consider the following timeline diagram:</p>
+<p><img src="https://cdn-images-1.medium.com/max/4258/1*B9moz-ywksOwNcEUQS3C4w.png" alt="Event timeline with improper ACK deduplication"><em>Event timeline with improper ACK deduplication</em></p>
+<p>This can lead to an invalid state if the graphing service <em>failed to persist
+event list B properly</em>, and would not have sent an ACK for those. The producer misinterprets the delayed ACK as if it were meant for event list B.</p>
+<p>Therefore, we need some sort of mechanism to match an ACK to a message that was send by the producer. This is unfortunately not straightforward<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#4c19">⁸</a>, so I’ll skip explaining the choices I made in this code, however feel free to check the reference or the code comments where I justify why that is the case. I will just attach the final version of the code (warning: it’s pretty long)<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#8139">¹²</a>.</p>
+<pre><code>type LikedArticlesPoller struct {
+  // ..
+
+  // Do not send new events until this specific one is acked. This also
+  // means not fetching any new events until that point.
+  unacked        Message
+  lastEventAcked bool
+}
+
+func (p *LikedArticlesPoller) sendNewEvents(events []ArticleLikedEvent) error {
+
+  // If there are no events, there is no point in sending anything,
+  if len(events) == 0 {
+    return nil
+  }
+
+  // Create a new message. If last event was not acked, the ACK may have
+  // been lost or will come with delay. Send the same event, to ensure
+  // that the ACK is generated again in case it was lost due to network
+  // failure.
+  //
+  // Note that not using latest events plays an important role here, if
+  // new events were generated. If this includes new events since an unacked
+  // event was send, it gets hard to keep track of what the consumer has
+  // actually persisted, and it may lead to missed events.
+  var message Message
+  if !p.lastEventAcked {
+    message = p.unacked
+  } else {
+    message = Message{
+      Id:     events[0].EventId,
+      Events: events,
+    }
+ }
+
+  // re-creating the encoder and decoder is necessary, see [12]
+  enc := json.NewEncoder(p.conn)
+  err := enc.Encode(message)
+  if err != nil {
+    return fmt.Errorf(&quot;could not send events: %s&quot;, err.Error())
+  }
+
+  // If the ack is not received after the timeout, we consider that the
+  // consumer failed.
+  p.conn.SetReadDeadline(time.Now().Add(p.timeout))
+
+  var ack Ack
+  dec := json.NewDecoder(p.conn)
+
+  // Note that if we sent the same event multiple times, it doesn't matter
+  // that the ACK may be delayed, nor that we may receive multiple ACKs.
+  // We only need a single ACK for this particular message. Since we won't
+  // send new messages, it will catch up in the end.
+  //
+  // If we only read from the consumer once per polling interval, we risk
+  // ending up with significant delay if we keep missing ACKs. To mitigate
+  // that, we updated the code to keep reading from the consumer until the
+  // deadline.
+  var loopErr error
+LOOP:
+  for {
+    err = p.dec.Decode(&amp;ack)
+    // this error includes timeout
+    if err != nil {
+      var e *net.OpError // internal net error
+      ok := errors.As(err, &amp;e)
+      if !ok {
+        // this covers all errors, including decoding errors. It means
+        // the event did not get acked properly.
+        p.lastEventAcked = false
+        p.unacked = message
+        loopErr = err
+    } else {
+      if e.Timeout() {
+        // This also counts as not being acked, especially the first
+        // time. The difference here is that we're breaking the
+        // loop.
+        p.lastEventAcked = false
+        p.unacked = message
+        loopErr = err
+        break LOOP
+      }
+    }
+    return fmt.Errorf(&quot;failed reading ack from consumer: %s&quot;, err.Error())
+  } else {
+    // Received an ACK for a previous message. We can disregard this.
+    if ack.Id != message.Id {
+      p.lastEventAcked = false
+      p.unacked = message
+    } else {
+        // proper ACK. we should break the loop.
+        p.lastEventAcked = true
+        p.unacked = Message{}
+        break LOOP
+      }
+    }
+  }
+
+  if loopErr != nil {
+    return fmt.Errorf(&quot;failed to ack; last received error: %s&quot;, err.Error())
+  }
+  return nil
+}
+</code></pre>
+<p>One final thought: this pattern, the way we implemented it here, guarantees at <a href="https://jack-vanlightly.com/blog/2017/12/15/rabbitmq-vs-kafka-part-4-message-delivery-semantics-and-guarantees">least once delivery</a>. It’s up to the consumer to make sure that the received events are not duplicated<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#3aef">⁷</a>. You can find the full Python consumer code <a href="https://github.com/Ozoniuss/misc/blob/main/outbox/main.py">here</a>, and a short sketch below<a href="https://medium.com/@ozoniuss/implementing-the-outbox-pattern-from-scratch-by-following-ddd-9972eae4f1ab#1c2f">¹³</a>:</p>
+<pre><code>@dataclass
+class ArticleLikedEvent:
+    event_id: str
+    article_id: str
+    timestamp: str
+
+@dataclass
+class Message:
+    id: int
+    events: list[ArticleLikedEvent]
+
+@dataclass
+class Ack:
+    id: int
+
+# local replica
+receivedEvents: list[ArticleLikedEvent] = []
+# all events that were already acked
+acked = set()
+
+with socket.socket(socket.AF_INET, socket.SOCK_STREAM) as s:
+    s.bind((HOST, PORT))
+    s.listen()
+    conn, addr = s.accept()
+    with conn:
+        while True:
+            try:
+                # Random size, I did not put any thought into it.
+                data = conn.recv(1024 * 1024 * 10).decode('UTF-8')
+
+                # convert json into message object
+                message = Message(**json.loads(str(data)))
+
+                # Here you could either re-ack or skip, but skipping is
+                # not the right choice. If a previous ack fails due to
+                # network failure, the producer will keep sending a message
+                # that was already processed until it's acked.
+                if message.id not in acked:
+                    # Generate the events only if it's a new message.
+                    message.events = [ArticleLikedEvent(**e) for e in
+                    message.events]
+
+                    # extend the local replica
+                    receivedEvents.extend(message.events)
+
+                ack = json.dumps(asdict(Ack(id=message.id)))
+                # Mark the event as acked to ignore it next time
+                # it comes.
+                acked.add(message.id)
+                conn.sendall(bytes(ack,encoding=&quot;utf-8&quot;))
+
+            # generate the graph upon ctrl + C
+            except KeyboardInterrupt:
+                generate_like_graph(receivedEvents)
+                break
+
+            except Exception as e:
+                print(&quot;unknown failure&quot;, e)
+                break
+</code></pre>
+<p>Also, here’s a “like graph” generated by the consumer’s replicated data, from the articles service. I used <a href="https://github.com/Ozoniuss/misc/blob/main/outbox/like.go">a script</a> to send requests to the articles service, with Python consumer running. The story wouldn’t be complete without it, right?</p>
+<p><img src="https://cdn-images-1.medium.com/max/2000/1*4mJk11gWwDq8qVgQBtr4eg.png" alt="Example like graph for an author"><em>Example like graph for an author</em></p>
+<p>Alright, this was a lot to take in. If you’ve managed to make it this far, thank you for reading! I hope this managed to walk you through the steps of putting up the implementation for the outbox design pattern from ground up, whilst also pointing out certain things to keep in mind during the implementation process. Writing this article at the same time with the code to keep things accurate was a nice experiment and, even though it took me several evenings of free time, I greatly enjoyed all of it.</p>
+<p>If you haven’t had enough, below are some of my extra thoughts that came up during the implementation process. I think they manage to do a good job showing why distributed systems are complicated, and how certain algorithms that seem easy at first glance can end up complicated really quickly.</p>
+<p>Would you like to see a walkthrough that tests extensively if this works as expected? Let me know in the comments!</p>
+<h2 id="notes" >
+<div>
+    <a href="#notes">
+        #
+    </a>
+    Notes
+</div>
+</h2>
+<p>Full implementation available <a href="https://github.com/Ozoniuss/misc/tree/main/outbox">on my Github</a>. It’s slightly different (e.g. with added logs for debugging), but the functionality is the same.</p>
+<p>[0]: This is the very first subscript.</p>
+<p>[1]: It was hard for me to grasp why at first, but it makes sense. The main purpose of an aggregate is consistency. It is not aware of databases or externals components like queues. By emitting events only from within an aggregate’s public methods and storing them in the aggregate, that consistency is kept. Once you loaded and modified the aggregate, you can retrieve everything that has changed: the new final state and the emitted events. The responsibility of ensuring that the new state is reflected properly (both events were delivered to consumers and new state was persisted, or none of them if either failed) is outside the bounds of the aggregate. This gives you a nice separation, since you can evolve your aggregate (which is internal to your business) and your infrastructure (external to your bussiness) separately.</p>
+<p>However, keep in mind that events themselves are not part of the article’s state, even if you persist them! The events are meant to describe what happened since you loaded the article and changed it, so when you load a fresh article, it should be <strong>without any existing events</strong>. This created a very annoying bug in my case, since my in-memory repository persists Article objects, which contain events, and I forgot to take this into account.</p>
+<p>[2]: I realised afterwards that with an in-memory database, it becomes kind of hard to reason about persistence, since you lose all state, and outbox is all about proper persistence. So yeah, too bad, I guess. I hope I get my point through nontheless.</p>
+<p>[3]: I went with this decision after I got tired of experimenting with synchronization mechanisms. Assuming every operation exposed by the storage aquires a lock, if you want to call multiple operations, you get deadlocked. One alternative would be to give each thread an identity and allowing a single thread to lock multiple times, until the lock is released by that same thread. The other would be to define some BeginTx() and CommitTx() methods that should be called to perform operations atomically, but having to remember to call those methods just to allow multiple operations is annoying, especially in the context of this article.</p>
+<p>I’m a bit unhappy with this implementation, since it only supports atomic operations. Sometimes, that’s too restrictive, see batch example at [4]. But since as far as I know, goroutines in Go can’t just “crash” (that would be the whole process failing) and a defer would run anyway, this is probably good enough to get the point accross. My intention was mainly to show different problems you have to think about once JavaScript ain’t cutting it no more.</p>
+<p>[4]: For one, it will be very difficult to support multiple consumers. Even if the current poller code is designed with a single consumer in mind, this other approach is not as easy to adapt as the first one. Not only that, but it’s another database interaction: you need to delete an array of events, which is not the cheapest operation (though that may vary depending on e.g. how things are ordered). The poller may also fail, so that operation needs a lock on the database, and if you fail to delete, you risk sending duplicate events, perhaps even part of a completely different batch.</p>
+<p>It must also be a batch delete on a given events list. You may think that you could just delete everything, but without a proper transaction mechanism you can’t do that, because the current model only allows atomic operations. Besides, even if you could, you’d have to lock from when you read the events until you delete them, and if a timeout happens, your writes are frozen for a good while. And you also can’t delete sequentially without transactions, because you run the risk of ending up in an inconsistent state in case of failure.</p>
+<p>In contrast, reasoning about failures is much simpler with an index: marking the events as sent is simply increasing an integer.</p>
+<p>[5]: There are alternatives, such as ordering by the event timestamp, but I found that using the array index comes with the least amount of added complexity. Besides, if we were to scale this horizontally, you should keep in mind with timestamps that <a href="https://medium.com/geekculture/all-things-clock-time-and-order-in-distributed-systems-logical-clocks-in-real-life-2-ad99aa64753">clocks work differently in distributed systems</a>.</p>
+<p>[6]: JSON is a good balance between readability and computationally friendly, but is not really efficient, neither with regards to payload size nor encoding and decoding efficiency. I would have probably used <a href="https://protobuf.dev/">protobuf</a>, if it didn’t require me to talk about a schema definition and make this article even longer. Of course, there are also things like <a href="https://thrift.apache.org/">Thrift</a>, <a href="https://avro.apache.org/docs/1.11.1/specification/">Avro</a> or even binary JSON if you want them. In Go-to-Go (language) communication, <a href="https://go.dev/blog/gob">gobs</a> are a nice choice.</p>
+<p>[7]: If an ACK is not received during a polling cycle, this code will re-send the same events in the next cycle. However, ACKs may fail for various reasons, such as network failures or network delays. A missing ACK alone does not guarantee that the consumer did not persist the events.</p>
+<p>[8] If the implementation only sends one ACK and always only waits for a single ACK to come back, you risk ending up in an endless cycle if every poll picks up new events, because every poll will send a new message whilst reading an old ack. In the unhappy scenario where consumer ACKs are delayed (but sent eventually, except too late), you are in an out-of-phase state where you will send a new event and always receive an ACK for a previous event. The producer will keep receiving a delayed ACK and not increment the index, but send a new message cause likes were added. This is unlikely, but quite a hard edge case to spot.</p>
+<p>You can cache all messages that were sent and update your poller based on whichever ACK you receive, so if an ACK is “truly” missed or if you receive an ACK “in-between” events, you can still advance. But if you only expect a single ACK, every time it’s lost it just adds to the delay.</p>
+<p>[9] An advantage you get with aggregates is a clear separation of concerns: your aggregate protects internal constraints, and your database only deals with storage. It also forces the handling of external system interaction outside, helping in managing a consistent state. What happens, however, when you have some business logic that does a lot of interactions with the database? What if you want to optimize the database calls into a single query?</p>
+<p>[10] Slices are also not thread-safe in Go as far as I know, so we’re not only protecting about intertwining business logic, but also concurrent slice writes. Unfortunately, I haven’t been able to find a reference in the Go documentation that explicitly addresses the dangers of concurrent slice writes (whether it panics or just the outcome is undetermined). Please comment with a source if you have any.</p>
+<p>[11] I purposefully avoided using Go terminology (e.g. array instead of slice, thread instead of goroutine) to make this more suitable for a broader audience. The concepts matter, not the details.</p>
+<p>[12] Originally, I had moved the json encoder and decoder to the poller internal fields, so I could reuse them. I thought it’s sufficient to create them once, when the poller is instantiated.</p>
+<pre><code>type LikedArticlesPoller struct {
+  // ...
+  enc *json.Encoder
+  dec *json.Decoder
+}
+
+func NewLikedArticlesPoller(storage ArticleStorage, pollInterval time.Duration, authority string) (*LikedArticlesPoller, error) {
+  // ...
+  enc := json.NewEncoder(conn)
+  dec := json.NewDecoder(conn)
+  // ...
+  return &amp;LikedArticlesPoller{
+    enc:            enc,
+    dec:            dec,
+  }, nil
+}
+</code></pre>
+<p>But, turns out this approach was not updating the connection deadline properly. Even though I would call p.conn.SetReadDeadline(deadline) , reusing p.enc.Encode() and p.enc.Decode() would not take the new deadline into account. Hence, why I kept re-creating them in every call to sendNewEvents() .</p>
+<p>[13] The Python code assumes a single author, for simplicity.</p>
+<h2 id="references" >
+<div>
+    <a href="#references">
+        #
+    </a>
+    References
+</div>
+</h2>
+<p>[MK]: “Designing Data-Intensive Applications: The Big Ideas Behind Reliable, Scalable, and Maintainable Systems” by Martin Kleppmann (chapter 4)</p>
+<p>[VK]: “Learning Domain-Driven Design: Aligning Software Architecture and Business Strategy” by Vlad Khononov (chapter Ports &amp; Adapters)</p>
+<h2 id="stackademic-" >
+<div>
+    <a href="#stackademic-">
+        #
+    </a>
+    Stackademic 🎓
+</div>
+</h2>
+<p>Thank you for reading until the end. Before you go:</p>
+<ul>
+<li>
+<p>Please consider <strong>clapping</strong> and <strong>following</strong> the writer! 👏</p>
+</li>
+<li>
+<p>Follow us <a href="https://twitter.com/stackademichq">**X</a> | <a href="https://www.linkedin.com/company/stackademic">LinkedIn</a> | <a href="https://www.youtube.com/c/stackademic">YouTube</a> | <a href="https://discord.gg/in-plain-english-709094664682340443">Discord</a>**</p>
+</li>
+<li>
+<p>Visit our other platforms: <a href="https://plainenglish.io/">**In Plain English</a> | <a href="https://cofeed.app/">CoFeed</a> | <a href="https://venturemagazine.net/">Venture</a> | <a href="https://blog.cubed.run/">Cubed</a>**</p>
+</li>
+<li>
+<p>More content at <a href="https://stackademic.com/">**Stackademic.com</a>**</p>
+</li>
+</ul>
+
+        </div>
+
+    </article>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        </main>
+
+            <footer class="common-footer noselect">
+
+
+
+    <div class="common-footer-bottom">
+
+
+        <div style="display: flex; align-items: center; gap:8px">
+            © ozoniuss, 2024
+
+        </div>
+        <div style="display:flex;align-items: center">
+
+
+
+
+
+
+        </div>
+        <div>
+            Powered by <a target="_blank" rel="noopener noreferrer" href="https://gohugo.io/">Hugo</a>, theme <a target="_blank" rel="noopener noreferrer" href="https://github.com/Junyi-99/hugo-theme-anubis2">Anubis2</a>.<br>
+
+
+        </div>
+    </div>
+
+    <p class="h-card vcard">
+
+    <a href=http://localhost:1313/the-code-review/ class="p-name u-url url fn" rel="me"></a>
+
+
+
+
+</p>
+
+</footer>
+
+
+    </div>
+</body>
+</html>
