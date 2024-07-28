@@ -28,6 +28,9 @@ colorThemeSwitcher = true # true | false; Showing color theme switcher in top of
 # toc = true # true | false; Showing table of contents in the post; default: true
 # math = false # true | false; Enable MathJax; default: false; You can enable MathJax in the post by adding math: true in a post's metadata section.
 
+customCSS = ["custom.scss"]
+
+
 # check more social icons at https://github.com/Junyi-99/hugo-theme-anubis2/wiki/Social-Icons
 social = [
     { id="github", name="Ozoniuss" },

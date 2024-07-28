@@ -1,0 +1,20 @@
+// $font-family-title: "Roboto Slab", "Times New Roman", garamond, serif;
+// $font-family-normal: "Fira Sans", arial, helvetica, sans-serif;
+// $font-family-mono: "Ubuntu Mono", monaco, consolas, monospace;
+
+// html * {
+//     font-family: "Fira", sans-serif
+//   }
+
+// h1,
+// h2,
+// h3,
+// h4,
+// h5,
+// h6 {
+//   font-family: $font-family-title;
+// }
+
+// body {
+//     font-family: $font-family-normal;
+//   }
