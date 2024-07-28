@@ -1,26 +1,35 @@
 <?xml version="1.0" encoding="utf-8" standalone="yes"?>
 <rss version="2.0" xmlns:atom="http://www.w3.org/2005/Atom">
   <channel>
-    <title>My New Hugo Site</title>
-    <link>http://localhost:1313/</link>
-    <description>Recent content on My New Hugo Site</description>
+    <title>The Code Review</title>
+    <link>/the-code-review/</link>
+    <description>The Code Review</description>
     <generator>Hugo -- gohugo.io</generator>
-      <language>en-us</language>
-      <lastBuildDate>Sun, 28 Jul 2024 18:30:38 +0300</lastBuildDate><atom:link href="http://localhost:1313/index.xml" rel="self" type="application/rss+xml" />
+    <language>en-us</language>
+    <managingEditor>qscxzsewqazxcde@gmail.com (ozoniuss)</managingEditor>
+    <webMaster>qscxzsewqazxcde@gmail.com (ozoniuss)</webMaster>
+    <lastBuildDate>Sun, 28 Jul 2024 18:30:38 +0300</lastBuildDate>
+
+    <atom:link href="/the-code-review/index.xml" rel="self" type="application/rss+xml" />
+
+
     <item>
       <title>Test</title>
-      <link>http://localhost:1313/docs/test/</link>
+      <link>/the-code-review/docs/test/</link>
       <pubDate>Sun, 28 Jul 2024 18:30:38 +0300</pubDate>
-
-      <guid>http://localhost:1313/docs/test/</guid>
-      <description>This is a test page. This is a test page.</description>
-      <content>
-&lt;h3 id=&#34;this-is-a-test-page&#34;&gt;
-  This is a test page.
-  &lt;a href=&#34;#this-is-a-test-page&#34; class=&#34;hanchor&#34; ariaLabel=&#34;Anchor&#34;&gt;&lt;/a&gt;
+      <author>qscxzsewqazxcde@gmail.com (ozoniuss)</author>
+      <guid>/the-code-review/docs/test/</guid>
+      <description>&lt;h3 id=&#34;this-is-a-test-page&#34; &gt;
+&lt;div&gt;
+    &lt;a href=&#34;#this-is-a-test-page&#34;&gt;
+        ##
+    &lt;/a&gt;
+    This is a test page.
+&lt;/div&gt;
 &lt;/h3&gt;
 &lt;p&gt;This is a test page.&lt;/p&gt;
-</content>
+</description>
     </item>
+
   </channel>
 </rss>

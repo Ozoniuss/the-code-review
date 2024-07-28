@@ -1,4 +1,51 @@
 baseURL = 'https://ozoniuss.github.io/the-code-review/'
 languageCode = 'en-us'
-title = 'My New Hugo Site'
-theme = 'hugo-xterm'
+title = 'The Code Review'
+theme = "anubis2"
+
+[author]
+name = "ozoniuss"
+email  = "qscxzsewqazxcde@gmail.com"
+location = "Romania"
+
+[menu]
+[[menu.main]]
+name = "Home"
+pageRef = "/"
+weight = 1
+
+[[menu.main]]
+name = "Posts"
+url = "/posts/"
+weight = 2
+
+[[menu.main]]
+identifier = "tags"
+name = "Tags"
+url = "/tags/"
+weight = 3
+
+[params]
+# readMore = false # true | false; Showing readmore link in the list of posts; default: false
+# readNextPosts = 3 # Number of posts to show in the "Read Next" section; default: 3
+colorTheme = "auto" # "auto" | "light" | "dark"; default: "auto"
+colorThemeSwitcher = true # true | false; Showing color theme switcher in top of the site; default: false
+# toc = true # true | false; Showing table of contents in the post; default: true
+# math = false # true | false; Enable MathJax; default: false; You can enable MathJax in the post by adding math: true in a post's metadata section.
+
+# check more social icons at https://github.com/Junyi-99/hugo-theme-anubis2/wiki/Social-Icons
+social = [
+    { id="github", name="Ozoniuss" },
+    { id="linkedin", url="https://www.linkedin.com/in/alex-bledea-a8865b1a0/" },
+]
+
+# rssIcon = true # true | false; Showing RSS icon; default: true
+
+[taxonomies]
+tag = "tags" # This allows you to use the "tags" in your markdown metadata
+
+[markup.goldmark.renderer]
+unsafe = true # true | false; Enable unsafe mode to have a better experience
+
+[markup.highlight]
+style = 'base16-snazzy' # Highlight.js style
