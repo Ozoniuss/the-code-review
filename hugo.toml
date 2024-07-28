@@ -1,0 +1,4 @@
+baseURL = 'https://ozoniuss.github.io/the-code-review/'
+languageCode = 'en-us'
+title = 'My New Hugo Site'
+theme = 'hugo-xterm'
